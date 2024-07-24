@@ -7,7 +7,7 @@ dotenv.config();
 
 const router = require("./src/routes");
 
-// require("./startup/config")(app, express);
+require("./startup/config")(app, express);
 require("./startup/db")();
 require("./startup/loginng")();
 app.use("/api", router);

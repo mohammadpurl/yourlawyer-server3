@@ -11,7 +11,7 @@
     "auto-bind": "^4.0.0",
     "auto-bind-inheritance": "^1.0.6",
     "bcrypt": "^5.1.1",
-    "config": "^3.3.9",
+    "config": "^3.3.12",
     "cors": "^2.8.5",
     "crypto-js": "^4.2.0",
     "debug": "^4.3.4",

@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
-const debuge = require("debug")("app:main");
-const config = require("config");
+
 const dotenv = require("dotenv");
 dotenv.config();
 module.exports = function () {

@@ -23,7 +23,7 @@ module.exports = new (class extends controller {
       const result = await this.saveUser(mobile, code);
       // if (!result)
       //   throw createHttpError.BadRequest("مشکلی در ورود ایجاد شده است");
-      const isSend = sendSMS(mobile, code);
+      // const isSend = sendSMS(mobile, code);
       this.response({
         res,
         message: "کد اعتبار سنجی با موفقیت برای شما ارسال شد",
