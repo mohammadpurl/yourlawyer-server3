@@ -12,5 +12,9 @@ require("./startup/db")();
 require("./startup/loginng")();
 app.use("/api", router);
 
+app.get("/", (req, res) => {
+  res.send("Hello, secure world!");
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`listening on port ${PORT}`));
