@@ -9,7 +9,8 @@ const router = require("./src/routes");
 
 require("./startup/config")(app, express);
 require("./startup/db")();
-require("./startup/loginng")();
+// require("./startup/loginng")();
+require("./startup/lawyer")();
 app.use("/api", router);
 
 app.get("/", (req, res) => {

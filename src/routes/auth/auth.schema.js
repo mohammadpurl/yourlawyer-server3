@@ -3,7 +3,7 @@ const getOtpSchema = joi.object({
   mobile: joi
     .string()
     .length(11)
-    // .pattern("^09[0-9]{9}$")
+    .pattern("^09[0-9]{9}$")
     .error(new Error("لطفا شماره موبایل را به درستی وارد کنید")),
 });
 
@@ -11,7 +11,7 @@ const checkOtpSchema = joi.object({
   mobile: joi
     .string()
     .length(11)
-    // .pattern("^09[0-9]{9}$")
+    .pattern("^09[0-9]{9}$")
     .error(new Error("لطفا شماره موبایل را به درستی وارد کنید")),
   code: joi
     .number()
