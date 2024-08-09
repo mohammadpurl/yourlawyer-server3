@@ -36,6 +36,7 @@ const loadAndProcessFiles = async (filePaths) => {
   let allSplits = [];
   for (let filePath of filePaths) {
     const absolutePath = path.resolve(__dirname, filePath);
+    console.log(`Absolute Path: ${absolutePath}`);
     const dataBuffer = fs.readFileSync(absolutePath);
     const pdfData = await pdf(dataBuffer);
     const splits = textSplitter.splitDocuments([pdfData.text]);
