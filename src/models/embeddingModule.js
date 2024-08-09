@@ -4,7 +4,6 @@ const path = require("path");
 require("dotenv").config();
 const pdf = require("pdf-parse");
 const { RecursiveCharacterTextSplitter } = require("@langchain/textsplitters");
-const { PDFLoader } = require("langchain/document_loaders/fs/pdf");
 const { OpenAI } = require("openai");
 const { Chroma } = require("chromadb");
 
@@ -26,6 +25,7 @@ for (var k in interfaces) {
 }
 
 console.log("my ip address:", addresses);
+const embeddingsFilePath = path.resolve(__dirname, "embeddings.json");
 // Function to load and process PDF files
 const loadAndProcessFiles = async (filePaths) => {
   const textSplitter = new RecursiveCharacterTextSplitter({
@@ -39,14 +39,17 @@ const loadAndProcessFiles = async (filePaths) => {
     console.log(`Absolute Path: ${absolutePath}`);
     const dataBuffer = fs.readFileSync(absolutePath);
     const pdfData = await pdf(dataBuffer);
+
     const splits = textSplitter.splitDocuments([pdfData.text]);
     allSplits.push(splits);
   }
+  console.log(allSplits[0]);
   return allSplits;
 };
 
 // Function to create embeddings
 const createEmbedding = async (text) => {
+  console.log("createEmbedding start");
   const response = await openai.embeddings.create({
     model: "text-embedding-ada-002",
     input: text,
@@ -59,16 +62,21 @@ const createEmbedding = async (text) => {
 const saveEmbeddings = async (splits) => {
   let embeddings = [];
   for (let split of splits) {
+    console.log(split);
     const embedding = await createEmbedding(split);
     embeddings.push(embedding);
   }
-  fs.writeFileSync("embeddings.json", JSON.stringify(embeddings));
+  fs.writeFileSync(embeddingsFilePath, JSON.stringify(embeddings));
 };
 
 // Function to load embeddings from a file
 const loadEmbeddings = () => {
-  const embeddingsData = fs.readFileSync("embeddings.json");
-  return JSON.parse(embeddingsData);
+  if (fs.existsSync(embeddingsFilePath)) {
+    const embeddingsData = fs.readFileSync(embeddingsFilePath);
+    return JSON.parse(embeddingsData);
+  } else {
+    throw new Error(`Embeddings file not found at ${embeddingsFilePath}`);
+  }
 };
 
 // Function to perform similarity search

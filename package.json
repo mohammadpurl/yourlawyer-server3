@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "@hapi/joi": "^17.1.1",
+    "@langchain/community": "^0.2.25",
     "@langchain/textsplitters": "^0.0.3",
     "auto-bind": "^4.0.0",
     "auto-bind-inheritance": "^1.0.6",
