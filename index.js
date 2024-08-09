@@ -4,6 +4,8 @@ const app = express();
 app.use(cors("*"));
 const dotenv = require("dotenv");
 dotenv.config();
+const path = require("path");
+app.use(express.static(path.join(__dirname, "public")));
 
 const router = require("./src/routes");
 
