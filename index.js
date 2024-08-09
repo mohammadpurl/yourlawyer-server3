@@ -2,21 +2,91 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 app.use(cors("*"));
+//ai
+const pdf = require("pdf-parse");
+const fs = require("fs");
+const OpenAI = require("openai");
+const Chroma = require("chromadb");
+//end api
 const dotenv = require("dotenv");
 dotenv.config();
 const path = require("path");
 app.use(express.static(path.join(__dirname, "public")));
-
+app.use(express.json());
 const router = require("./src/routes");
 
 require("./startup/config")(app, express);
 require("./startup/db")();
 // require("./startup/loginng")();
-require("./startup/lawyer")();
+// require("./startup/lawyer")();
 app.use("/api", router);
 
 app.get("/", (req, res) => {
   res.send("Hello, secure world!");
+});
+
+//ai
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// Initialize Chroma Vector Database
+let vectordb;
+
+// Function to load and vectorize documents
+async function loadAndVectorizeDocuments() {
+  try {
+    // Read PDF file
+    const filePaths = [path.join(__dirname, "../public/Data/requests.pdf")];
+    const dataBuffer = fs.readFileSync(filePaths);
+    const data = await pdf(dataBuffer);
+
+    // Simulate text splitting (you may need to implement this or use a similar library)
+    const textChunks = data.text.match(/.{1,1500}/g); // Split into chunks of 1500 characters
+
+    // Initialize embeddings (using OpenAI or any other embedding service)
+    const embeddings = await Promise.all(
+      textChunks.map((chunk) =>
+        openai.embeddings.create({
+          input: chunk,
+        })
+      )
+    );
+
+    // Create vector database (you might need a custom implementation or a different library)
+    vectordb = new Chroma(embeddings);
+  } catch (error) {
+    console.error("Error loading and vectorizing documents:", error);
+  }
+}
+
+// Initialize the database once
+loadAndVectorizeDocuments();
+//ai
+
+// Endpoint to handle questions
+app.post("/ask", async (req, res) => {
+  const { question } = req.body;
+  if (!question) {
+    return res.status(400).send("Question is required.");
+  }
+
+  try {
+    // Perform similarity search
+    const results = vectordb.similaritySearch(question, 5); // Adjust the number of results as needed
+
+    // Generate response using OpenAI
+    const response = await openai.completions.create({
+      model: "gpt-3.5-turbo",
+      prompt: `Context: ${results.join("\n")}\nQuestion: ${question}\nAnswer:`,
+      max_tokens: 150,
+    });
+
+    res.send({ answer: response.choices[0].text.trim() });
+  } catch (error) {
+    console.error("Error handling question:", error);
+    res.status(500).send("Internal Server Error");
+  }
 });
 
 const PORT = process.env.PORT || 5000;
