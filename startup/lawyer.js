@@ -7,7 +7,7 @@ const {
 } = require("./../src/models/embeddingModule");
 
 module.exports = async () => {
-  const filePaths = ["../Data/requests.pdf"];
+  const filePaths = ["../public/Data/requests.pdf"];
   console.log(filePaths);
   const splits = await loadAndProcessFiles(filePaths);
   await saveEmbeddings(splits);
