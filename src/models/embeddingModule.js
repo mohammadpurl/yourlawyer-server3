@@ -62,21 +62,41 @@ const createEmbedding = async (text) => {
 // Function to save embeddings to a file
 const saveEmbeddings = async (splits) => {
   let embeddings = [];
+
   for (let split of splits) {
-    console.log(split);
     const embedding = await createEmbedding(split);
     embeddings.push(embedding);
   }
-  fs.writeFileSync(embeddingsFilePath, JSON.stringify(embeddings));
+
+  // Ensure the directory exists
+  const dirPath = path.dirname(embeddingsFilePath);
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+
+  if (embeddings.length > 0) {
+    fs.writeFileSync(embeddingsFilePath, JSON.stringify(embeddings));
+  } else {
+    throw new Error("No embeddings were created to save.");
+  }
 };
 
 // Function to load embeddings from a file
 const loadEmbeddings = () => {
   if (fs.existsSync(embeddingsFilePath)) {
-    const embeddingsData = fs.readFileSync(embeddingsFilePath);
-    return JSON.parse(embeddingsData);
+    const embeddingsData = fs.readFileSync(embeddingsFilePath, "utf-8");
+
+    if (embeddingsData.trim() === "") {
+      throw new Error("Embeddings file is empty or corrupted.");
+    }
+
+    try {
+      return JSON.parse(embeddingsData);
+    } catch (error) {
+      throw new Error(`Failed to parse embeddings JSON: ${error.message}`);
+    }
   } else {
-    throw new Error(`Embeddings file not dddddddddd at ${embeddingsFilePath}`);
+    throw new Error(`Embeddings file not found at ${embeddingsFilePath}`);
   }
 };
 
