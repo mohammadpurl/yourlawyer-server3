@@ -26,6 +26,7 @@ for (var k in interfaces) {
 
 console.log("my ip address:", addresses);
 const embeddingsFilePath = path.resolve(__dirname, "embeddings.json");
+console.log(`embeddingsFilePath: ${embeddingsFilePath}`);
 // Function to load and process PDF files
 const loadAndProcessFiles = async (filePaths) => {
   const textSplitter = new RecursiveCharacterTextSplitter({
@@ -75,7 +76,7 @@ const loadEmbeddings = () => {
     const embeddingsData = fs.readFileSync(embeddingsFilePath);
     return JSON.parse(embeddingsData);
   } else {
-    throw new Error(`Embeddings file not found at ${embeddingsFilePath}`);
+    throw new Error(`Embeddings file not dddddddddd at ${embeddingsFilePath}`);
   }
 };
 
