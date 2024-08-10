@@ -8,6 +8,9 @@ const fs = require("fs");
 const OpenAI = require("openai");
 // const Chroma = require("chromadb");
 const { Chroma } = require("@langchain/community/vectorstores/chroma");
+// const { PDFLoader } = require("langchain/document_loaders/fs/pdf");
+const { PDFLoader } = require("@langchain/community/document_loaders/fs/pdf");
+const { OpenAIEmbeddings } = require("langchain/embeddings/openai");
 //end api
 const dotenv = require("dotenv");
 dotenv.config();
@@ -15,6 +18,7 @@ const path = require("path");
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 const router = require("./src/routes");
+const { constants } = require("fs/promises");
 
 require("./startup/config")(app, express);
 require("./startup/db")();
@@ -38,32 +42,48 @@ let vectordb;
 // Function to load and vectorize documents
 async function loadAndVectorizeDocuments(pdfPaths) {
   try {
-    let allTextChunks = [];
+    // let allTextChunks = [];
 
-    for (let path of pdfPaths) {
-      // Read each PDF file from the file system
-      const dataBuffer = fs.readFileSync(path);
+    // for (let path of pdfPaths) {
+    //   // Read each PDF file from the file system
+    //   const dataBuffer = fs.readFileSync(path);
 
-      // Parse the PDF to extract text
-      const data = await pdf(dataBuffer);
+    //   // Parse the PDF to extract text
+    //   const data = await pdf(dataBuffer);
 
-      // Simulate text splitting (you may need to implement a more robust text splitting)
-      const textChunks = data.text.match(/.{1,1500}/g); // Split into chunks of 1500 characters
+    //   // Simulate text splitting (you may need to implement a more robust text splitting)
+    //   const textChunks = data.text.match(/.{1,1500}/g); // Split into chunks of 1500 characters
 
-      allTextChunks = allTextChunks.concat(textChunks);
+    //   allTextChunks = allTextChunks.concat(textChunks);
+    // }
+
+    let allDocs = [];
+
+    try {
+      for (let filePath of pdfPaths) {
+        const loader = new PDFLoader(filePath);
+        const docs = await loader.load();
+        allDocs = allDocs.concat(docs); // Combine the documents from each PDF
+      }
+      console.log("Documents loaded:", allDocs);
+    } catch (error) {
+      console.error("Error loading documents:", error);
     }
 
     // Initialize embeddings (using OpenAI or any other embedding service)
-    const embeddings = await Promise.all(
-      allTextChunks.map((chunk) =>
-        openai.embeddings.create({
-          input: chunk,
-        })
-      )
-    );
+    // const embeddings = await Promise.all(
+    //   allTextChunks.map((chunk) =>
+    //     openai.embeddings.create({
+    //       input: chunk,
+    //     })
+    //   )
+    // );
+    const embeddings = new OpenAIEmbeddings({
+      openAIApiKey: process.env.OPENAI_API_KEY,
+    });
 
     // Create vector database (you might need a custom implementation or a different library)
-    vectordb = new Chroma.fromDocuments(allTextChunks, embeddings);
+    vectordb = new Chroma.fromDocuments(allDocs, embeddings);
     console.log(`vectordb is ${vectordb}`);
   } catch (error) {
     console.error("Error loading and vectorizing documents:", error);
