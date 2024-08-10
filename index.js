@@ -34,19 +34,27 @@ const openai = new OpenAI({
 let vectordb;
 
 // Function to load and vectorize documents
-async function loadAndVectorizeDocuments() {
+// Function to load and vectorize documents
+async function loadAndVectorizeDocuments(pdfPaths) {
   try {
-    // Read PDF file
-    const filePaths = [path.join(__dirname, "../public/Data/requests.pdf")];
-    const dataBuffer = fs.readFileSync(filePaths);
-    const data = await pdf(dataBuffer);
+    let allTextChunks = [];
 
-    // Simulate text splitting (you may need to implement this or use a similar library)
-    const textChunks = data.text.match(/.{1,1500}/g); // Split into chunks of 1500 characters
+    for (let path of pdfPaths) {
+      // Read each PDF file from the file system
+      const dataBuffer = fs.readFileSync(path);
+
+      // Parse the PDF to extract text
+      const data = await pdf(dataBuffer);
+
+      // Simulate text splitting (you may need to implement a more robust text splitting)
+      const textChunks = data.text.match(/.{1,1500}/g); // Split into chunks of 1500 characters
+
+      allTextChunks = allTextChunks.concat(textChunks);
+    }
 
     // Initialize embeddings (using OpenAI or any other embedding service)
     const embeddings = await Promise.all(
-      textChunks.map((chunk) =>
+      allTextChunks.map((chunk) =>
         openai.embeddings.create({
           input: chunk,
         })
@@ -60,9 +68,11 @@ async function loadAndVectorizeDocuments() {
   }
 }
 
-// Initialize the database once
-loadAndVectorizeDocuments();
-//ai
+// Example: List of PDF file paths
+const pdfFiles = [path.join(__dirname, "public/Data/requests.pdf")];
+
+// Initialize the database once with multiple PDFs
+loadAndVectorizeDocuments(pdfFiles);
 
 // Endpoint to handle questions
 app.post("/ask", async (req, res) => {
