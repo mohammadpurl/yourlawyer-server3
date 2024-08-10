@@ -6,7 +6,8 @@ app.use(cors("*"));
 const pdf = require("pdf-parse");
 const fs = require("fs");
 const OpenAI = require("openai");
-const Chroma = require("chromadb");
+// const Chroma = require("chromadb");
+const { Chroma } = require("@langchain/community/vectorstores/chroma");
 //end api
 const dotenv = require("dotenv");
 dotenv.config();
@@ -62,7 +63,7 @@ async function loadAndVectorizeDocuments(pdfPaths) {
     );
 
     // Create vector database (you might need a custom implementation or a different library)
-    vectordb = new Chroma(embeddings);
+    vectordb = new Chroma.fromDocuments(allTextChunks, embeddings);
     console.log(`vectordb is ${vectordb}`);
   } catch (error) {
     console.error("Error loading and vectorizing documents:", error);
