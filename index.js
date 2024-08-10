@@ -63,6 +63,7 @@ async function loadAndVectorizeDocuments(pdfPaths) {
 
     // Create vector database (you might need a custom implementation or a different library)
     vectordb = new Chroma(embeddings);
+    console.log(`vectordb is ${vectordb}`);
   } catch (error) {
     console.error("Error loading and vectorizing documents:", error);
   }
