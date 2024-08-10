@@ -10,7 +10,7 @@ const OpenAI = require("openai");
 const { Chroma } = require("@langchain/community/vectorstores/chroma");
 // const { PDFLoader } = require("langchain/document_loaders/fs/pdf");
 const { PDFLoader } = require("@langchain/community/document_loaders/fs/pdf");
-const { OpenAIEmbeddings } = require("langchain/embeddings/openai");
+const { OpenAIEmbeddings } = require("@langchain/core/embeddings/openai");
 //end api
 const dotenv = require("dotenv");
 dotenv.config();
