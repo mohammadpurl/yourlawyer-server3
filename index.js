@@ -45,18 +45,15 @@ async function loadAndVectorizeDocuments(pdfPaths) {
     });
     console.log(embeddings);
     console.log("start vectorize");
-    try {
-      vectordb = await Chroma.fromDocuments(allDocs, embeddings, {
-        collectionName: "state_of_the_union",
-      });
-    } catch (error) {
-      // throw new Error("vectordb error ", error);
-      return res.status(400).send(error);
-    }
+
+    vectordb = await Chroma.fromDocuments(allDocs, embeddings, {
+      collectionName: "state_of_the_union",
+    });
 
     console.log(`vectordb is ${vectordb}`);
   } catch (error) {
     console.error("Error loading and vectorizing documents error:", error);
+    return res.status(500).send(error);
   }
 }
 
@@ -67,10 +64,6 @@ app.post("/ask", async (req, res) => {
   if (!question) {
     return res.status(400).send("Question is required.");
   }
-
-  // if (!vectordb) {
-  //   return res.status(500).send("Vector database is not initialized.",e);
-  // }
 
   try {
     const results = await vectordb.similaritySearch(question, 5); // Ensure await is used here
