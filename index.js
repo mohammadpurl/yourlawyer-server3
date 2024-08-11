@@ -50,7 +50,8 @@ async function loadAndVectorizeDocuments(pdfPaths) {
         collectionName: "state_of_the_union",
       });
     } catch (error) {
-      throw new Error("vectordb error ", error);
+      // throw new Error("vectordb error ", error);
+      return res.status(400).send(error);
     }
 
     console.log(`vectordb is ${vectordb}`);
