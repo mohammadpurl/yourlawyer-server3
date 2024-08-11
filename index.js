@@ -56,7 +56,7 @@ async function loadAndVectorizeDocuments(pdfPaths) {
 
     console.log(`vectordb is ${vectordb}`);
   } catch (error) {
-    console.error("Error loading and vectorizing documents:", error);
+    console.error("Error loading and vectorizing documents error:", error);
   }
 }
 
