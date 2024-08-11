@@ -2,19 +2,12 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 app.use(cors("*"));
-//ai
 const pdf = require("pdf-parse");
 const fs = require("fs");
 const OpenAI = require("openai");
-// const Chroma = require("chromadb");
 const { Chroma } = require("@langchain/community/vectorstores/chroma");
-
-// const { PDFLoader } = require("langchain/document_loaders/fs/pdf");
 const { PDFLoader } = require("@langchain/community/document_loaders/fs/pdf");
-// const { OpenAIEmbeddings } = require("langchain/embeddings/openai");
 const { OpenAIEmbeddings } = require("@langchain/openai");
-
-//end api
 const dotenv = require("dotenv");
 dotenv.config();
 const path = require("path");
@@ -25,46 +18,32 @@ const { constants } = require("fs/promises");
 
 require("./startup/config")(app, express);
 require("./startup/db")();
-// require("./startup/loginng")();
-// require("./startup/lawyer")();
 app.use("/api", router);
 
 app.get("/", (req, res) => {
   res.send("Hello, secure world!");
 });
 
-//ai
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Initialize Chroma Vector Database
 let vectordb;
 
-// Function to load and vectorize documents
-// Function to load and vectorize documents
 async function loadAndVectorizeDocuments(pdfPaths) {
   try {
     let allDocs = [];
 
-    try {
-      for (let filePath of pdfPaths) {
-        const loader = new PDFLoader(filePath);
-        const docs = await loader.load();
-        allDocs = allDocs.concat(docs); // Combine the documents from each PDF
-      }
-      console.log("Documents loaded:", allDocs);
-    } catch (error) {
-      console.error("Error loading documents:", error);
+    for (let filePath of pdfPaths) {
+      const loader = new PDFLoader(filePath);
+      const docs = await loader.load();
+      allDocs = allDocs.concat(docs);
     }
 
     const embeddings = new OpenAIEmbeddings({
       openAIApiKey: process.env.OPENAI_API_KEY,
     });
 
-    console.log("Embeddings created:", embeddings);
-
-    // Create vector database (you might need a custom implementation or a different library)
     vectordb = await Chroma.fromDocuments(allDocs, embeddings, {
       collectionName: "state_of_the_union",
     });
@@ -74,13 +53,8 @@ async function loadAndVectorizeDocuments(pdfPaths) {
   }
 }
 
-// Example: List of PDF file paths
 const pdfFiles = [path.join(__dirname, "public/Data/requests.pdf")];
 
-// Initialize the database once with multiple PDFs
-// loadAndVectorizeDocuments(pdfFiles);
-
-// Endpoint to handle questions
 app.post("/ask", async (req, res) => {
   const { question } = req.body;
   if (!question) {
@@ -92,10 +66,8 @@ app.post("/ask", async (req, res) => {
   }
 
   try {
-    // Perform similarity search
-    const results = vectordb.similaritySearch(question, 5); // Adjust the number of results as needed
+    const results = await vectordb.similaritySearch(question, 5); // Ensure await is used here
 
-    // Generate response using OpenAI
     const response = await openai.completions.create({
       model: "gpt-3.5-turbo",
       prompt: `Context: ${results.join("\n")}\nQuestion: ${question}\nAnswer:`,
