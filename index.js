@@ -68,9 +68,9 @@ app.post("/ask", async (req, res) => {
     return res.status(400).send("Question is required.");
   }
 
-  if (!vectordb) {
-    return res.status(500).send("Vector database is not initialized.");
-  }
+  // if (!vectordb) {
+  //   return res.status(500).send("Vector database is not initialized.",e);
+  // }
 
   try {
     const results = await vectordb.similaritySearch(question, 5); // Ensure await is used here
@@ -84,7 +84,7 @@ app.post("/ask", async (req, res) => {
     res.send({ answer: response.choices[0].text.trim() });
   } catch (error) {
     console.error("Error handling question:", error);
-    res.status(500).send("Internal Server Error");
+    res.status(500).send("Internal Server Error", error);
   }
 });
 
