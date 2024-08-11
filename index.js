@@ -39,14 +39,20 @@ async function loadAndVectorizeDocuments(pdfPaths) {
       const docs = await loader.load();
       allDocs = allDocs.concat(docs);
     }
-
+    console.log(allDocs);
     const embeddings = new OpenAIEmbeddings({
       openAIApiKey: process.env.OPENAI_API_KEY,
     });
+    console.log(embeddings);
+    console.log("start vectorize");
+    try {
+      vectordb = await Chroma.fromDocuments(allDocs, embeddings, {
+        collectionName: "state_of_the_union",
+      });
+    } catch (error) {
+      throw new Error("vectordb error ", error);
+    }
 
-    vectordb = await Chroma.fromDocuments(allDocs, embeddings, {
-      collectionName: "state_of_the_union",
-    });
     console.log(`vectordb is ${vectordb}`);
   } catch (error) {
     console.error("Error loading and vectorizing documents:", error);
