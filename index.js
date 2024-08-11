@@ -29,31 +29,21 @@ const openai = new OpenAI({
 });
 
 let vectordb;
-
+let allDocs = [];
+let embeddings;
 async function loadAndVectorizeDocuments(pdfPaths) {
   try {
-    let allDocs = [];
-
     for (let filePath of pdfPaths) {
       const loader = new PDFLoader(filePath);
       const docs = await loader.load();
       allDocs = allDocs.concat(docs);
     }
     console.log(allDocs);
-    const embeddings = new OpenAIEmbeddings({
+    embeddings = new OpenAIEmbeddings({
       openAIApiKey: process.env.OPENAI_API_KEY,
     });
-    console.log(embeddings);
-    console.log("start vectorize");
-
-    vectordb = await Chroma.fromDocuments(allDocs, embeddings, {
-      collectionName: "state_of_the_union",
-    });
-
-    console.log(`vectordb is ${vectordb}`);
   } catch (error) {
     console.error("Error loading and vectorizing documents error:", error);
-    return res.status(500).send(error);
   }
 }
 
@@ -64,7 +54,18 @@ app.post("/ask", async (req, res) => {
   if (!question) {
     return res.status(400).send("Question is required.");
   }
+  try {
+    console.log(embeddings);
+    console.log("start vectorize");
 
+    vectordb = await Chroma.fromDocuments(allDocs, embeddings, {
+      collectionName: "state_of_the_union",
+    });
+
+    console.log(`vectordb is ${vectordb}`);
+  } catch (error) {
+    return res.status(500).send(error);
+  }
   try {
     const results = await vectordb.similaritySearch(question, 5); // Ensure await is used here
 
@@ -74,7 +75,7 @@ app.post("/ask", async (req, res) => {
       max_tokens: 150,
     });
 
-    res.send({ answer: response.choices[0].text.trim() });
+    res.status(200).send({ answer: response.choices[0].text.trim() });
   } catch (error) {
     console.error("Error handling question:", error);
     res.status(500).send("Internal Server Error", error);
