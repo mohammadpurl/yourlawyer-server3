@@ -8,9 +8,12 @@ const fs = require("fs");
 const OpenAI = require("openai");
 // const Chroma = require("chromadb");
 const { Chroma } = require("@langchain/community/vectorstores/chroma");
+
 // const { PDFLoader } = require("langchain/document_loaders/fs/pdf");
 const { PDFLoader } = require("@langchain/community/document_loaders/fs/pdf");
-const { OpenAIEmbeddings } = require("@langchain/core/embeddings/openai");
+// const { OpenAIEmbeddings } = require("langchain/embeddings/openai");
+const { OpenAIEmbeddings } = require("@langchain/openai");
+
 //end api
 const dotenv = require("dotenv");
 dotenv.config();
@@ -83,7 +86,7 @@ async function loadAndVectorizeDocuments(pdfPaths) {
     });
 
     // Create vector database (you might need a custom implementation or a different library)
-    vectordb = new Chroma.fromDocuments(allDocs, embeddings);
+    vectordb = await Chroma.fromDocuments(allDocs, embeddings);
     console.log(`vectordb is ${vectordb}`);
   } catch (error) {
     console.error("Error loading and vectorizing documents:", error);
