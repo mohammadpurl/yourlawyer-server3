@@ -87,6 +87,10 @@ app.post("/ask", async (req, res) => {
     return res.status(400).send("Question is required.");
   }
 
+  if (!vectordb) {
+    return res.status(500).send("Vector database is not initialized.");
+  }
+
   try {
     // Perform similarity search
     const results = vectordb.similaritySearch(question, 5); // Adjust the number of results as needed
