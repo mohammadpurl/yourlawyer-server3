@@ -45,21 +45,6 @@ let vectordb;
 // Function to load and vectorize documents
 async function loadAndVectorizeDocuments(pdfPaths) {
   try {
-    // let allTextChunks = [];
-
-    // for (let path of pdfPaths) {
-    //   // Read each PDF file from the file system
-    //   const dataBuffer = fs.readFileSync(path);
-
-    //   // Parse the PDF to extract text
-    //   const data = await pdf(dataBuffer);
-
-    //   // Simulate text splitting (you may need to implement a more robust text splitting)
-    //   const textChunks = data.text.match(/.{1,1500}/g); // Split into chunks of 1500 characters
-
-    //   allTextChunks = allTextChunks.concat(textChunks);
-    // }
-
     let allDocs = [];
 
     try {
@@ -73,20 +58,16 @@ async function loadAndVectorizeDocuments(pdfPaths) {
       console.error("Error loading documents:", error);
     }
 
-    // Initialize embeddings (using OpenAI or any other embedding service)
-    // const embeddings = await Promise.all(
-    //   allTextChunks.map((chunk) =>
-    //     openai.embeddings.create({
-    //       input: chunk,
-    //     })
-    //   )
-    // );
     const embeddings = new OpenAIEmbeddings({
       openAIApiKey: process.env.OPENAI_API_KEY,
     });
 
+    console.log("Embeddings created:", embeddings);
+
     // Create vector database (you might need a custom implementation or a different library)
-    vectordb = await Chroma.fromDocuments(allDocs, embeddings);
+    vectordb = await Chroma.fromDocuments(allDocs, embeddings, {
+      collectionName: "state_of_the_union",
+    });
     console.log(`vectordb is ${vectordb}`);
   } catch (error) {
     console.error("Error loading and vectorizing documents:", error);
@@ -97,7 +78,7 @@ async function loadAndVectorizeDocuments(pdfPaths) {
 const pdfFiles = [path.join(__dirname, "public/Data/requests.pdf")];
 
 // Initialize the database once with multiple PDFs
-loadAndVectorizeDocuments(pdfFiles);
+// loadAndVectorizeDocuments(pdfFiles);
 
 // Endpoint to handle questions
 app.post("/ask", async (req, res) => {
@@ -125,4 +106,13 @@ app.post("/ask", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`listening on port ${PORT}`));
+async function initializeServer() {
+  try {
+    await loadAndVectorizeDocuments(pdfFiles);
+    app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
+  } catch (error) {
+    console.error("Failed to initialize server:", error);
+  }
+}
+
+initializeServer();
