@@ -64,7 +64,8 @@ app.post("/ask", async (req, res) => {
 
     console.log(`vectordb is ${vectordb}`);
   } catch (error) {
-    return res.status(500).send(error);
+    throw new Error(`Failed vectorize: ${error.message}`);
+    // return res.status(500).send(error);
   }
   try {
     const results = await vectordb.similaritySearch(question, 5); // Ensure await is used here
