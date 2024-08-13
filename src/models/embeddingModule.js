@@ -50,13 +50,17 @@ const loadAndProcessFiles = async (filePaths) => {
 
 // Function to create embeddings
 const createEmbedding = async (text) => {
-  console.log("createEmbedding start");
-  const response = await openai.embeddings.create({
-    model: "text-embedding-ada-002",
-    input: text,
-  });
-  console.log("embeddinggggggggggggggggggggggggggggg");
-  return response.data.data[0].embedding;
+  try {
+    console.log("createEmbedding start");
+    const response = await openai.embeddings.create({
+      model: "text-embedding-ada-002",
+      input: text,
+    });
+    console.log("embeddinggggggggggggggggggggggggggggg");
+    return response.data.data[0].embedding;
+  } catch (error) {
+    console.log(`embedding error: ${error}`);
+  }
 };
 
 // Function to save embeddings to a file
