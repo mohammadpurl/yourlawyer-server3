@@ -56,6 +56,7 @@ async function loadAndVectorizeDocuments(pdfPaths: string[]): Promise<void> {
         textKey: "text",
       }
     );
+    console.log(vector_store);
   } catch (error) {
     console.error("Error loading and vectorizing documents:", error);
   }

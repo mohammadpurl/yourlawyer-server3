@@ -59,6 +59,7 @@ function loadAndVectorizeDocuments(pdfPaths) {
                 namespace: "yourLawyer",
                 textKey: "text",
             });
+            console.log(vector_store);
         }
         catch (error) {
             console.error("Error loading and vectorizing documents:", error);
