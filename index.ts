@@ -32,7 +32,7 @@ const openai = new OpenAI({
 let vectordb: Chroma | undefined;
 let allDocs: any[] = [];
 let embeddings: OpenAIEmbeddings | undefined;
-
+let vector_store: PineconeStore;
 async function loadAndVectorizeDocuments(pdfPaths: string[]): Promise<void> {
   try {
     for (let filePath of pdfPaths) {
@@ -47,15 +47,11 @@ async function loadAndVectorizeDocuments(pdfPaths: string[]): Promise<void> {
 
     const pc = await getPineconeClient();
     const pineconeIndex = pc.index("yourlawyer");
-    const vector_store = await PineconeStore.fromDocuments(
-      allDocs,
-      embeddings,
-      {
-        pineconeIndex: pineconeIndex,
-        namespace: "yourLawyer",
-        textKey: "text",
-      }
-    );
+    vector_store = await PineconeStore.fromDocuments(allDocs, embeddings, {
+      pineconeIndex: pineconeIndex,
+      namespace: "yourLawyer",
+      textKey: "text",
+    });
     console.log(vector_store);
   } catch (error) {
     console.error("Error loading and vectorizing documents:", error);
@@ -75,18 +71,16 @@ app.post("/ask", async (req: Request, res: Response) => {
 
     if (!embeddings) throw new Error("Embeddings are not initialized.");
 
-    vectordb = await Chroma.fromDocuments(allDocs, embeddings, {
-      collectionName: "state_of_the_union",
-    });
+    vector_store.similaritySearch(question, 10);
 
     console.log(`vectordb is ${vectordb}`);
   } catch (error: any) {
     throw new Error(`Failed to vectorize: ${error.message}`);
   }
   try {
-    if (!vectordb) throw new Error("VectorDB is not initialized.");
+    if (!vector_store) throw new Error("VectorDB is not initialized.");
 
-    const results = await vectordb.similaritySearch(question, 5);
+    const results = await vector_store.similaritySearch(question, 5);
 
     const response = await openai.completions.create({
       model: "gpt-3.5-turbo",

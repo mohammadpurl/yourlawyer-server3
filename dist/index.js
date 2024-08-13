@@ -15,7 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const openai_1 = __importDefault(require("openai"));
-const chroma_1 = require("@langchain/community/vectorstores/chroma");
 const pdf_1 = require("@langchain/community/document_loaders/fs/pdf");
 const openai_2 = require("@langchain/openai");
 const pinecone_1 = require("@langchain/pinecone");
@@ -40,6 +39,7 @@ const openai = new openai_1.default({
 let vectordb;
 let allDocs = [];
 let embeddings;
+let vector_store;
 function loadAndVectorizeDocuments(pdfPaths) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -54,7 +54,7 @@ function loadAndVectorizeDocuments(pdfPaths) {
             });
             const pc = yield (0, pinecone_2.getPineconeClient)();
             const pineconeIndex = pc.index("yourlawyer");
-            const vector_store = yield pinecone_1.PineconeStore.fromDocuments(allDocs, embeddings, {
+            vector_store = yield pinecone_1.PineconeStore.fromDocuments(allDocs, embeddings, {
                 pineconeIndex: pineconeIndex,
                 namespace: "yourLawyer",
                 textKey: "text",
@@ -77,18 +77,16 @@ app.post("/ask", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         console.log("Start vectorize");
         if (!embeddings)
             throw new Error("Embeddings are not initialized.");
-        vectordb = yield chroma_1.Chroma.fromDocuments(allDocs, embeddings, {
-            collectionName: "state_of_the_union",
-        });
+        vector_store.similaritySearch(question, 10);
         console.log(`vectordb is ${vectordb}`);
     }
     catch (error) {
         throw new Error(`Failed to vectorize: ${error.message}`);
     }
     try {
-        if (!vectordb)
+        if (!vector_store)
             throw new Error("VectorDB is not initialized.");
-        const results = yield vectordb.similaritySearch(question, 5);
+        const results = yield vector_store.similaritySearch(question, 5);
         const response = yield openai.completions.create({
             model: "gpt-3.5-turbo",
             prompt: `Context: ${results.join("\n")}\nQuestion: ${question}\nAnswer:`,
