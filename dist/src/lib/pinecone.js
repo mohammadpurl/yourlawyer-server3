@@ -17,11 +17,17 @@ const getPineconeClient = () => __awaiter(void 0, void 0, void 0, function* () {
     const pc = new pinecone_1.Pinecone({
         apiKey: process.env.PINECONE_API_KEY,
     });
-    yield pc.createIndex({
-        name: "yourlawyer",
-        dimension: 1536,
-        spec: { serverless: { cloud: "aws", region: "us-east-1" } },
-    });
+    const indexExists = yield pc.describeIndex("yourlawyer");
+    if (indexExists) {
+        console.log("Pinecone index already exists.");
+    }
+    else {
+        yield pc.createIndex({
+            name: "yourlawyer",
+            dimension: 1536,
+            spec: { serverless: { cloud: "aws", region: "us-east-1" } },
+        });
+    }
     return pc;
 });
 exports.getPineconeClient = getPineconeClient;

@@ -7,11 +7,16 @@ export const getPineconeClient = async () => {
     apiKey: process.env.PINECONE_API_KEY!,
   });
 
-  await pc.createIndex({
-    name: "yourlawyer",
-    dimension: 1536,
-    spec: { serverless: { cloud: "aws", region: "us-east-1" } },
-  });
+  const indexExists = await pc.describeIndex("yourlawyer");
+  if (indexExists) {
+    console.log("Pinecone index already exists.");
+  } else {
+    await pc.createIndex({
+      name: "yourlawyer",
+      dimension: 1536,
+      spec: { serverless: { cloud: "aws", region: "us-east-1" } },
+    });
+  }
 
   return pc;
 };
