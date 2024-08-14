@@ -1,7 +1,6 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
 import OpenAI from "openai";
-import { Chroma } from "@langchain/community/vectorstores/chroma";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { PineconeStore } from "@langchain/pinecone";
@@ -23,6 +22,9 @@ app.use(express.json());
 setupApp(app, express);
 connectToDatabase();
 app.use("/api", router);
+let allDocs: any[] = [];
+let embeddings: OpenAIEmbeddings | undefined;
+let vector_store: PineconeStore;
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello, secure world!");
@@ -32,10 +34,6 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "",
 });
 
-let vectordb: Chroma | undefined;
-let allDocs: any[] = [];
-let embeddings: OpenAIEmbeddings | undefined;
-let vector_store: PineconeStore;
 async function loadAndVectorizeDocuments(pdfPaths: string[]): Promise<void> {
   try {
     for (let filePath of pdfPaths) {
@@ -74,13 +72,18 @@ app.post("/ask", async (req: Request, res: Response) => {
 
     if (!embeddings) throw new Error("Embeddings are not initialized.");
 
-    vector_store.similaritySearch(question, 10);
-
-    console.log(`vectordb is ${vectordb}`);
+    console.log(`vectordb is ${vector_store}`);
   } catch (error: any) {
     throw new Error(`Failed to vectorize: ${error.message}`);
   }
   try {
+    const pc = await getPineconeClient();
+    const pineconeIndex = pc.index("yourlawyer");
+    const vector_store = await PineconeStore.fromExistingIndex(embeddings, {
+      pineconeIndex: pineconeIndex,
+      namespace: "yourLawyer",
+      textKey: "text",
+    });
     if (!vector_store) throw new Error("VectorDB is not initialized.");
 
     const results = await vector_store.similaritySearch(question, 5);

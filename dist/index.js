@@ -32,16 +32,15 @@ app.use(express_1.default.json());
 (0, config_1.default)(app, express_1.default);
 (0, db_1.default)();
 app.use("/api", routes_1.default);
+let allDocs = [];
+let embeddings;
+let vector_store;
 app.get("/", (req, res) => {
     res.send("Hello, secure world!");
 });
 const openai = new openai_1.default({
     apiKey: process.env.OPENAI_API_KEY || "",
 });
-let vectordb;
-let allDocs = [];
-let embeddings;
-let vector_store;
 function loadAndVectorizeDocuments(pdfPaths) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -79,13 +78,19 @@ app.post("/ask", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         console.log("Start vectorize");
         if (!embeddings)
             throw new Error("Embeddings are not initialized.");
-        vector_store.similaritySearch(question, 10);
-        console.log(`vectordb is ${vectordb}`);
+        console.log(`vectordb is ${vector_store}`);
     }
     catch (error) {
         throw new Error(`Failed to vectorize: ${error.message}`);
     }
     try {
+        const pc = yield (0, pinecone_2.getPineconeClient)();
+        const pineconeIndex = pc.index("yourlawyer");
+        const vector_store = yield pinecone_1.PineconeStore.fromExistingIndex(embeddings, {
+            pineconeIndex: pineconeIndex,
+            namespace: "yourLawyer",
+            textKey: "text",
+        });
         if (!vector_store)
             throw new Error("VectorDB is not initialized.");
         const results = yield vector_store.similaritySearch(question, 5);
