@@ -38,39 +38,12 @@ let vector_store;
 app.get("/", (req, res) => {
     res.send("Hello, secure world!");
 });
-app.post("/", (req, res) => {
-    res.send("post");
-});
 const openai = new openai_1.default({
     apiKey: process.env.OPENAI_API_KEY || "",
 });
-function loadAndVectorizeDocuments(pdfPaths) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            for (let filePath of pdfPaths) {
-                const loader = new pdf_1.PDFLoader(filePath);
-                const docs = yield loader.load();
-                allDocs = allDocs.concat(docs);
-            }
-            console.log(allDocs);
-            embeddings = new openai_2.OpenAIEmbeddings({
-                openAIApiKey: process.env.OPENAI_API_KEY || "",
-            });
-            const pc = yield (0, pinecone_2.getPineconeClient)();
-            const pineconeIndex = pc.index("yourlawyer");
-            vector_store = yield pinecone_1.PineconeStore.fromDocuments(allDocs, embeddings, {
-                pineconeIndex: pineconeIndex,
-                namespace: "yourLawyer",
-                textKey: "text",
-            });
-            console.log(vector_store);
-        }
-        catch (error) {
-            console.error("Error loading and vectorizing documents:", error);
-        }
-    });
-}
-const pdfFiles = [path_1.default.join(__dirname, "public/Data/requests.pdf")];
+app.post("/", (req, res) => {
+    res.send("post");
+});
 app.post("/ask", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { question } = req.body;
     if (!question) {
@@ -109,6 +82,33 @@ app.post("/ask", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         res.status(500).send("Internal Server Error");
     }
 }));
+function loadAndVectorizeDocuments(pdfPaths) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            for (let filePath of pdfPaths) {
+                const loader = new pdf_1.PDFLoader(filePath);
+                const docs = yield loader.load();
+                allDocs = allDocs.concat(docs);
+            }
+            console.log(allDocs);
+            embeddings = new openai_2.OpenAIEmbeddings({
+                openAIApiKey: process.env.OPENAI_API_KEY || "",
+            });
+            const pc = yield (0, pinecone_2.getPineconeClient)();
+            const pineconeIndex = pc.index("yourlawyer");
+            vector_store = yield pinecone_1.PineconeStore.fromDocuments(allDocs, embeddings, {
+                pineconeIndex: pineconeIndex,
+                namespace: "yourLawyer",
+                textKey: "text",
+            });
+            console.log(vector_store);
+        }
+        catch (error) {
+            console.error("Error loading and vectorizing documents:", error);
+        }
+    });
+}
+const pdfFiles = [path_1.default.join(__dirname, "public/Data/requests.pdf")];
 const PORT = process.env.PORT || 5000;
 function initializeServer() {
     return __awaiter(this, void 0, void 0, function* () {

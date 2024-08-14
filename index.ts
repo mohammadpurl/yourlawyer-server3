@@ -29,40 +29,12 @@ let vector_store: PineconeStore;
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello, secure world!");
 });
-app.post("/", (req: Request, res: Response) => {
-  res.send("post");
-});
-
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "",
 });
-
-async function loadAndVectorizeDocuments(pdfPaths: string[]): Promise<void> {
-  try {
-    for (let filePath of pdfPaths) {
-      const loader = new PDFLoader(filePath);
-      const docs = await loader.load();
-      allDocs = allDocs.concat(docs);
-    }
-    console.log(allDocs);
-    embeddings = new OpenAIEmbeddings({
-      openAIApiKey: process.env.OPENAI_API_KEY || "",
-    });
-
-    const pc = await getPineconeClient();
-    const pineconeIndex = pc.index("yourlawyer");
-    vector_store = await PineconeStore.fromDocuments(allDocs, embeddings, {
-      pineconeIndex: pineconeIndex,
-      namespace: "yourLawyer",
-      textKey: "text",
-    });
-    console.log(vector_store);
-  } catch (error) {
-    console.error("Error loading and vectorizing documents:", error);
-  }
-}
-
-const pdfFiles = [path.join(__dirname, "public/Data/requests.pdf")];
+app.post("/", (req: Request, res: Response) => {
+  res.send("post");
+});
 
 app.post("/ask", async (req: Request, res: Response) => {
   const { question } = req.body;
@@ -103,6 +75,33 @@ app.post("/ask", async (req: Request, res: Response) => {
     res.status(500).send("Internal Server Error");
   }
 });
+
+async function loadAndVectorizeDocuments(pdfPaths: string[]): Promise<void> {
+  try {
+    for (let filePath of pdfPaths) {
+      const loader = new PDFLoader(filePath);
+      const docs = await loader.load();
+      allDocs = allDocs.concat(docs);
+    }
+    console.log(allDocs);
+    embeddings = new OpenAIEmbeddings({
+      openAIApiKey: process.env.OPENAI_API_KEY || "",
+    });
+
+    const pc = await getPineconeClient();
+    const pineconeIndex = pc.index("yourlawyer");
+    vector_store = await PineconeStore.fromDocuments(allDocs, embeddings, {
+      pineconeIndex: pineconeIndex,
+      namespace: "yourLawyer",
+      textKey: "text",
+    });
+    console.log(vector_store);
+  } catch (error) {
+    console.error("Error loading and vectorizing documents:", error);
+  }
+}
+
+const pdfFiles = [path.join(__dirname, "public/Data/requests.pdf")];
 
 const PORT = process.env.PORT || 5000;
 async function initializeServer() {
