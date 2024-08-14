@@ -56,14 +56,16 @@ app.post("/", async (req: Request, res: Response) => {
       textKey: "text",
     });
     if (!vector_store) throw new Error("VectorDB is not initialized.");
+    console.log(`vector_store is ${vector_store}`);
 
     const results = await vector_store.similaritySearch(question, 5);
-
+    console.log(`similaritySearch is ${results}`);
     const response = await openai.completions.create({
       model: "gpt-3.5-turbo",
       prompt: `Context: ${results.join("\n")}\nQuestion: ${question}\nAnswer:`,
       max_tokens: 150,
     });
+    console.log(`openai result  is ${response}`);
 
     res.status(200).send({ answer: response.choices[0].text.trim() });
   } catch (error) {
