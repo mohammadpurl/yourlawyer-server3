@@ -10,6 +10,9 @@ import path from "path";
 import router from "./src/routes";
 import { getPineconeClient } from "./src/lib/pinecone";
 
+import connectToDatabase from "./startup/db";
+import setupApp from "./startup/config";
+
 dotenv.config();
 
 const app = express();
@@ -17,8 +20,8 @@ app.use(cors({ origin: "*" }));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 
-require("./startup/config")(app, express);
-require("./startup/db")();
+setupApp(app, express);
+connectToDatabase();
 app.use("/api", router);
 
 app.get("/", (req: Request, res: Response) => {

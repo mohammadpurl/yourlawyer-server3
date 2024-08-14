@@ -22,13 +22,15 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const path_1 = __importDefault(require("path"));
 const routes_1 = __importDefault(require("./src/routes"));
 const pinecone_2 = require("./src/lib/pinecone");
+const db_1 = __importDefault(require("./startup/db"));
+const config_1 = __importDefault(require("./startup/config"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({ origin: "*" }));
 app.use(express_1.default.static(path_1.default.join(__dirname, "public")));
 app.use(express_1.default.json());
-require("./startup/config")(app, express_1.default);
-require("./startup/db")();
+(0, config_1.default)(app, express_1.default);
+(0, db_1.default)();
 app.use("/api", routes_1.default);
 app.get("/", (req, res) => {
     res.send("Hello, secure world!");
