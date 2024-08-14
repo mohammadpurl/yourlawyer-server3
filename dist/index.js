@@ -69,13 +69,18 @@ app.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         console.log(`vector_store is ${vector_store}`);
         const results = yield vector_store.similaritySearch(question, 5);
         console.log(`similaritySearch is ${results}`);
-        const response = yield openai.completions.create({
+        // const response = await openai.completions.create({
+        //   model: "gpt-3.5-turbo",
+        //   prompt: `Context: ${results.join("\n")}\nQuestion: ${question}\nAnswer:`,
+        //   max_tokens: 150,
+        // });
+        const response = yield openai.chat.completions.create({
             model: "gpt-3.5-turbo",
-            prompt: `Context: ${results.join("\n")}\nQuestion: ${question}\nAnswer:`,
+            messages: question,
             max_tokens: 150,
         });
         console.log(`openai result  is ${response}`);
-        res.status(200).send({ answer: response.choices[0].text.trim() });
+        res.status(200).send({ answer: response.choices[0] });
     }
     catch (error) {
         console.error("Error handling question:", error);
