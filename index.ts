@@ -26,7 +26,7 @@ let allDocs: any[] = [];
 let embeddings: OpenAIEmbeddings | undefined;
 let vector_store: PineconeStore;
 
-app.get("/", (req: Request, res: Response) => {
+app.get("/api", (req: Request, res: Response) => {
   res.send("Hello, secure world!");
 });
 
@@ -61,7 +61,7 @@ async function loadAndVectorizeDocuments(pdfPaths: string[]): Promise<void> {
 
 const pdfFiles = [path.join(__dirname, "public/Data/requests.pdf")];
 
-app.post("/ask", async (req: Request, res: Response) => {
+app.post("/api/ask", async (req: Request, res: Response) => {
   const { question } = req.body;
   if (!question) {
     return res.status(400).send("Question is required.");

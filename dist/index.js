@@ -35,7 +35,7 @@ app.use("/api", routes_1.default);
 let allDocs = [];
 let embeddings;
 let vector_store;
-app.get("/", (req, res) => {
+app.get("/api", (req, res) => {
     res.send("Hello, secure world!");
 });
 const openai = new openai_1.default({
@@ -68,7 +68,7 @@ function loadAndVectorizeDocuments(pdfPaths) {
     });
 }
 const pdfFiles = [path_1.default.join(__dirname, "public/Data/requests.pdf")];
-app.post("/ask", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post("/api/ask", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { question } = req.body;
     if (!question) {
         return res.status(400).send("Question is required.");
