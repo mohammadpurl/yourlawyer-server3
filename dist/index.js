@@ -41,9 +41,44 @@ app.get("/", (req, res) => {
 const openai = new openai_1.default({
     apiKey: process.env.OPENAI_API_KEY || "",
 });
-app.post("/", (req, res) => {
-    res.send("post");
-});
+app.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { question } = req.body;
+    if (!question) {
+        return res.status(400).send("Question is required.");
+    }
+    try {
+        console.log(embeddings);
+        console.log("Start vectorize");
+        if (!embeddings)
+            throw new Error("Embeddings are not initialized.");
+        console.log(`vectordb is ${vector_store}`);
+    }
+    catch (error) {
+        throw new Error(`Failed to vectorize: ${error.message}`);
+    }
+    try {
+        const pc = yield (0, pinecone_2.getPineconeClient)();
+        const pineconeIndex = pc.index("yourlawyer");
+        const vector_store = yield pinecone_1.PineconeStore.fromExistingIndex(embeddings, {
+            pineconeIndex: pineconeIndex,
+            namespace: "yourLawyer",
+            textKey: "text",
+        });
+        if (!vector_store)
+            throw new Error("VectorDB is not initialized.");
+        const results = yield vector_store.similaritySearch(question, 5);
+        const response = yield openai.completions.create({
+            model: "gpt-3.5-turbo",
+            prompt: `Context: ${results.join("\n")}\nQuestion: ${question}\nAnswer:`,
+            max_tokens: 150,
+        });
+        res.status(200).send({ answer: response.choices[0].text.trim() });
+    }
+    catch (error) {
+        console.error("Error handling question:", error);
+        res.status(500).send("Internal Server Error");
+    }
+}));
 app.post("/ask", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { question } = req.body;
     if (!question) {
