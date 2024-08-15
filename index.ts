@@ -165,7 +165,7 @@ async function initializePinecone() {
 //     res.status(500).send("Internal Server Error");
 //   }
 // });
-app.post("/new", async (req: Request, res: Response) => {
+app.post("/newask", async (req: Request, res: Response) => {
   const data = await getRelatedDataAsRetrieval(req.body);
   res.status(200).send({
     data,
@@ -204,12 +204,12 @@ app.post("/", async (req: Request, res: Response) => {
 
     console.log(retriever);
 
-    const condenseQuestionTemplate = `Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
+    const condenseQuestionTemplate = `با توجه به مکالمه زیر و یک سؤال بعدی، سؤال بعدی را مجدداً به عنوان سؤال مستقل بیان کنید.
 
-Chat History:
+تاریخچه چت:
 {chat_history}
-Follow Up Input: {question}
-Standalone question:
+پیگیری ورودی: {question}
+سوال مستقل:
 `;
 
     const CONDENSE_QUESTION_PROMPT = PromptTemplate.fromTemplate(
@@ -255,6 +255,7 @@ Question: {question}
         context: retriever.pipe(combineDocumentsFn),
         question: new RunnablePassthrough(),
       },
+      ANSWER_PROMPT,
       llm,
       new StringOutputParser(),
     ]);

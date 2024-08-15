@@ -153,7 +153,7 @@ function initializePinecone() {
 //     res.status(500).send("Internal Server Error");
 //   }
 // });
-app.post("/new", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post("/newask", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const data = yield (0, get_related_data_as_retrieval_1.getRelatedDataAsRetrieval)(req.body);
     res.status(200).send({
         data,
@@ -186,12 +186,12 @@ app.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         console.log(`openai result  is ${llm}`);
         const retriever = vector_store.asRetriever();
         console.log(retriever);
-        const condenseQuestionTemplate = `Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
+        const condenseQuestionTemplate = `با توجه به مکالمه زیر و یک سؤال بعدی، سؤال بعدی را مجدداً به عنوان سؤال مستقل بیان کنید.
 
-Chat History:
+تاریخچه چت:
 {chat_history}
-Follow Up Input: {question}
-Standalone question:
+پیگیری ورودی: {question}
+سوال مستقل:
 `;
         const CONDENSE_QUESTION_PROMPT = prompts_1.PromptTemplate.fromTemplate(condenseQuestionTemplate);
         const answerTemplate = `Answer the question based only on the following context:
@@ -223,6 +223,7 @@ Question: {question}
                 context: retriever.pipe(combineDocumentsFn),
                 question: new runnables_1.RunnablePassthrough(),
             },
+            ANSWER_PROMPT,
             llm,
             new output_parsers_1.StringOutputParser(),
         ]);
