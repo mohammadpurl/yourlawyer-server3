@@ -194,6 +194,8 @@ app.post("/", async (req: Request, res: Response) => {
 
     const retriever = vector_store.asRetriever();
 
+    console.log(`retriever ${retriever}`);
+
     const answerTemplate = `Answer the question based only on the following context:
 {context}
 

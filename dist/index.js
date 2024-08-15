@@ -178,6 +178,7 @@ app.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         });
         console.log(`openai result  is ${llm}`);
         const retriever = vector_store.asRetriever();
+        console.log(`retriever ${retriever}`);
         const answerTemplate = `Answer the question based only on the following context:
 {context}
 
