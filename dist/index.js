@@ -116,6 +116,7 @@ Question: {question}
             llm,
             new output_parsers_1.StringOutputParser(),
         ]);
+        console.log(`standaloneQuestionChain is ${standaloneQuestionChain}`);
         const answerChain = runnables_1.RunnableSequence.from([
             {
                 context: retriever.pipe(document_1.formatDocumentsAsString),
@@ -124,6 +125,7 @@ Question: {question}
             ANSWER_PROMPT,
             llm,
         ]);
+        console.log(`answerChain is ${answerChain}`);
         const conversationalRetrievalQAChain = standaloneQuestionChain.pipe(answerChain);
         const result1 = yield conversationalRetrievalQAChain.invoke({
             question: question,
