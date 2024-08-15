@@ -24,6 +24,7 @@ import { formatDocumentsAsString } from "langchain/util/document";
 import { ConversationalRetrievalQAChainInput } from "./types/chat";
 import { EmbeddingsInterface } from "@langchain/core/embeddings";
 import { DocumentInterface } from "@langchain/core/documents";
+import { getRelatedDataAsRetrieval } from "./get-related-data-as-retrieval";
 
 dotenv.config();
 
@@ -164,8 +165,13 @@ async function initializePinecone() {
 //     res.status(500).send("Internal Server Error");
 //   }
 // });
-
 app.post("/", async (req: Request, res: Response) => {
+  const data = await getRelatedDataAsRetrieval(req.body);
+  res.status(200).send({
+    data,
+  });
+});
+app.post("/newask", async (req: Request, res: Response) => {
   const { question } = req.body;
   if (!question) {
     return res.status(400).send("Question is required.");

@@ -1,12 +1,23 @@
 {
   "name": "yourlawyer-server3",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "index.ts",  
+  "type": "module",
+  "target": "es2017",
+  "module": "esnext",
+
   "scripts": {
   "build": "tsc",
   "dev": "ts-node index.ts",
   "start": "node dist/index.js"
 },
+"compilerOptions": {
+    
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true
+  },
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "@langchain/community": "^0.2.25",
