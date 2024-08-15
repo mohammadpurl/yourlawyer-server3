@@ -46,24 +46,26 @@ const openai = new openai_1.default({
     apiKey: process.env.OPENAI_API_KEY || "",
 });
 // Initialize embeddings and Pinecone client outside the route handler
-(() => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const pc = yield (0, pinecone_2.getPineconeClient)();
-        embeddings = new openai_2.OpenAIEmbeddings({
-            openAIApiKey: process.env.OPENAI_API_KEY,
-        });
-        const pineconeIndex = pc.index("yourlawyer");
-        vector_store = yield pinecone_1.PineconeStore.fromExistingIndex(embeddings, {
-            pineconeIndex: pineconeIndex,
-            namespace: "yourLawyer",
-            textKey: "text",
-        });
-        console.log(vector_store);
-    }
-    catch (error) {
-        console.error("Error initializing vector store:", error);
-    }
-}))();
+function initializePinecone() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const pc = yield (0, pinecone_2.getPineconeClient)();
+            embeddings = new openai_2.OpenAIEmbeddings({
+                openAIApiKey: process.env.OPENAI_API_KEY,
+            });
+            const pineconeIndex = pc.index("yourlawyer");
+            vector_store = yield pinecone_1.PineconeStore.fromExistingIndex(embeddings, {
+                pineconeIndex: pineconeIndex,
+                namespace: "yourLawyer",
+                textKey: "text",
+            });
+            console.log(vector_store);
+        }
+        catch (error) {
+            console.error("Error initializing vector store:", error);
+        }
+    });
+}
 // app.post("/", async (req: Request, res: Response) => {
 //   const { question } = req.body;
 //   if (!question) {
@@ -258,6 +260,7 @@ function initializeServer() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             yield loadAndVectorizeDocuments(pdfFiles);
+            yield initializePinecone();
             app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
         }
         catch (error) {

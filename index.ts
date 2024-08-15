@@ -45,7 +45,7 @@ const openai = new OpenAI({
 });
 // Initialize embeddings and Pinecone client outside the route handler
 
-(async () => {
+async function initializePinecone() {
   try {
     const pc = await getPineconeClient();
     embeddings = new OpenAIEmbeddings({
@@ -61,7 +61,7 @@ const openai = new OpenAI({
   } catch (error) {
     console.error("Error initializing vector store:", error);
   }
-})();
+}
 
 // app.post("/", async (req: Request, res: Response) => {
 //   const { question } = req.body;
@@ -279,6 +279,7 @@ const PORT = process.env.PORT || 5000;
 async function initializeServer() {
   try {
     await loadAndVectorizeDocuments(pdfFiles);
+    await initializePinecone();
     app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
   } catch (error) {
     console.error("Failed to initialize server:", error);
