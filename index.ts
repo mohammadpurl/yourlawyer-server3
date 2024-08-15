@@ -8,9 +8,12 @@ import dotenv from "dotenv";
 import path from "path";
 import router from "./src/routes";
 import { getPineconeClient } from "./src/lib/pinecone";
-
+import { ChatOpenAI } from "@langchain/openai";
 import connectToDatabase from "./startup/db";
 import setupApp from "./startup/config";
+import { createRetrievalChain } from "langchain/chains/retrieval";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 
 dotenv.config();
 
@@ -65,14 +68,32 @@ app.post("/", async (req: Request, res: Response) => {
     //   prompt: `Context: ${results.join("\n")}\nQuestion: ${question}\nAnswer:`,
     //   max_tokens: 150,
     // });
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: question,
-      max_tokens: 150,
+    const llm = new ChatOpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+      modelName: "gpt-4-1106-preview",
     });
-    console.log(`openai result  is ${response}`);
+    console.log(`openai result  is ${llm}`);
 
-    res.status(200).send({ answer: response.choices[0] });
+    // const memory = new ConversationTokenBufferMemory({
+    //   memoryKey: "chat_history",
+    //   returnMessages: true,
+    // });
+    const retriever = vector_store.asRetriever();
+
+    // Create a conversational retrieval chain
+    const prompt = ChatPromptTemplate.fromTemplate(
+      `Answer the user's question: {input} based on the following context {context}`
+    );
+
+    const combineDocsChain = await createStuffDocumentsChain({
+      llm,
+      prompt,
+    });
+    const retrievalChain = await createRetrievalChain({
+      combineDocsChain,
+      retriever,
+    });
+    res.status(200).send({ answer: retrievalChain });
   } catch (error) {
     console.error("Error handling question:", error);
     res.status(500).send("Internal Server Error");

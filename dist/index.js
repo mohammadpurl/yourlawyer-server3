@@ -22,8 +22,12 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const path_1 = __importDefault(require("path"));
 const routes_1 = __importDefault(require("./src/routes"));
 const pinecone_2 = require("./src/lib/pinecone");
+const openai_3 = require("@langchain/openai");
 const db_1 = __importDefault(require("./startup/db"));
 const config_1 = __importDefault(require("./startup/config"));
+const retrieval_1 = require("langchain/chains/retrieval");
+const prompts_1 = require("@langchain/core/prompts");
+const combine_documents_1 = require("langchain/chains/combine_documents");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({ origin: "*" }));
@@ -74,13 +78,27 @@ app.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         //   prompt: `Context: ${results.join("\n")}\nQuestion: ${question}\nAnswer:`,
         //   max_tokens: 150,
         // });
-        const response = yield openai.chat.completions.create({
-            model: "gpt-3.5-turbo",
-            messages: question,
-            max_tokens: 150,
+        const llm = new openai_3.ChatOpenAI({
+            apiKey: process.env.OPENAI_API_KEY,
+            modelName: "gpt-4-1106-preview",
         });
-        console.log(`openai result  is ${response}`);
-        res.status(200).send({ answer: response.choices[0] });
+        console.log(`openai result  is ${llm}`);
+        // const memory = new ConversationTokenBufferMemory({
+        //   memoryKey: "chat_history",
+        //   returnMessages: true,
+        // });
+        const retriever = vector_store.asRetriever();
+        // Create a conversational retrieval chain
+        const prompt = prompts_1.ChatPromptTemplate.fromTemplate(`Answer the user's question: {input} based on the following context {context}`);
+        const combineDocsChain = yield (0, combine_documents_1.createStuffDocumentsChain)({
+            llm,
+            prompt,
+        });
+        const retrievalChain = yield (0, retrieval_1.createRetrievalChain)({
+            combineDocsChain,
+            retriever,
+        });
+        res.status(200).send({ answer: retrievalChain });
     }
     catch (error) {
         console.error("Error handling question:", error);
