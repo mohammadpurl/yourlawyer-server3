@@ -172,13 +172,15 @@ app.post("/", async (req: Request, res: Response) => {
   try {
     await initializePinecone();
     const pc = await getPineconeClient();
+    embeddings = new OpenAIEmbeddings({
+      openAIApiKey: process.env.OPENAI_API_KEY,
+    });
     const pineconeIndex = pc.index("yourlawyer");
-    const vector_store = await PineconeStore.fromExistingIndex(embeddings, {
+    vector_store = await PineconeStore.fromExistingIndex(embeddings, {
       pineconeIndex: pineconeIndex,
       namespace: "yourLawyer",
       textKey: "text",
     });
-    if (!vector_store) throw new Error("VectorDB is not initialized.");
     console.log(`vector_store is ${vector_store}`);
 
     const results = await vector_store.similaritySearch(question, 5);
