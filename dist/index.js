@@ -229,17 +229,35 @@ Question: {question}
         /*
       AIMessage { content: "The golden key is in the Mountains of Ilsodor. }
     */
-        const result2 = yield conversationalRetrievalQAChain.invoke({
-            question: question,
-            chat_history: [
-                [
-                    "Where is the golden key?",
-                    "The golden key is in the Mountains of Ilsodor.",
-                ],
+        const response = yield openai.chat.completions.create({
+            model: "gpt-3.5-turbo",
+            temperature: 0,
+            stream: true,
+            messages: [
+                {
+                    role: "system",
+                    content: "Use the following pieces of context (or previous conversaton if needed) to answer the users question in markdown format.",
+                },
+                {
+                    role: "user",
+                    content: `Use the following pieces of context (or previous conversaton if needed) to answer the users question in markdown format. \nIf you don't know the answer, just say that you don't know, don't try to make up an answer.
+      
+\n----------------\n
+
+
+CONTEXT:
+${results.map((r) => r.pageContent).join("\n\n")}
+
+USER INPUT: ${question}`,
+                },
             ],
         });
+        const result2 = yield conversationalRetrievalQAChain.invoke({
+            question: question,
+            chat_history: [[]],
+        });
         console.log(result2);
-        res.status(200).send({ answer: result2 });
+        res.status(200).send({ answer: result2, response });
     }
     catch (error) {
         console.error("Error handling question:", error);
