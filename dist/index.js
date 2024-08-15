@@ -27,7 +27,6 @@ const db_1 = __importDefault(require("./startup/db"));
 const config_1 = __importDefault(require("./startup/config"));
 const prompts_1 = require("@langchain/core/prompts");
 const runnables_1 = require("@langchain/core/runnables");
-const output_parsers_1 = require("@langchain/core/output_parsers");
 const document_1 = require("langchain/util/document");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -46,77 +45,127 @@ app.get("/", (req, res) => {
 const openai = new openai_1.default({
     apiKey: process.env.OPENAI_API_KEY || "",
 });
+// Initialize embeddings and Pinecone client outside the route handler
+(() => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const pc = yield (0, pinecone_2.getPineconeClient)();
+        embeddings = new openai_2.OpenAIEmbeddings();
+        const pineconeIndex = pc.index("yourlawyer");
+        vector_store = yield pinecone_1.PineconeStore.fromExistingIndex(embeddings, {
+            pineconeIndex: pineconeIndex,
+            namespace: "yourLawyer",
+            textKey: "text",
+        });
+    }
+    catch (error) {
+        console.error("Error initializing vector store:", error);
+    }
+}))();
+// app.post("/", async (req: Request, res: Response) => {
+//   const { question } = req.body;
+//   if (!question) {
+//     return res.status(400).send("Question is required.");
+//   }
+//   try {
+//     console.log(embeddings);
+//     console.log("Start vectorize");
+//     if (!embeddings) throw new Error("Embeddings are not initialized.");
+//     console.log(`vectordb is ${vector_store}`);
+//   } catch (error: any) {
+//     throw new Error(`Failed to vectorize: ${error.message}`);
+//   }
+//   try {
+//     const pc = await getPineconeClient();
+//     const pineconeIndex = pc.index("yourlawyer");
+//     const vector_store = await PineconeStore.fromExistingIndex(embeddings, {
+//       pineconeIndex: pineconeIndex,
+//       namespace: "yourLawyer",
+//       textKey: "text",
+//     });
+//     if (!vector_store) throw new Error("VectorDB is not initialized.");
+//     console.log(`vector_store is ${vector_store}`);
+//     const results = await vector_store.similaritySearch(question, 5);
+//     console.log(`similaritySearch is ${results}`);
+//     const llm = new ChatOpenAI({
+//       apiKey: process.env.OPENAI_API_KEY,
+//       modelName: "gpt-3.5-turbo",
+//     });
+//     console.log(`openai result  is ${llm}`);
+//     const retriever = vector_store.asRetriever();
+//     // Create a conversational retrieval chain
+//     const condenseQuestionTemplate = `Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question, in its original language.
+//     Chat History:
+//     {chat_history}
+//     Follow Up Input: ${question}
+//     Standalone question:`;
+//     const CONDENSE_QUESTION_PROMPT = PromptTemplate.fromTemplate(
+//       condenseQuestionTemplate
+//     );
+//     const answerTemplate = `Answer the question based only on the following context:
+// {context}
+// Question: {question}
+// `;
+//     const ANSWER_PROMPT = PromptTemplate.fromTemplate(answerTemplate);
+//     const formatChatHistory = (chatHistory: [string, string][]) => {
+//       const formattedDialogueTurns = chatHistory.map(
+//         (dialogueTurn) =>
+//           `Human: ${dialogueTurn[0]}\nAssistant: ${dialogueTurn[1]}`
+//       );
+//       return formattedDialogueTurns.join("\n");
+//     };
+//     const standaloneQuestionChain = RunnableSequence.from([
+//       {
+//         question: (input: ConversationalRetrievalQAChainInput) =>
+//           input.question,
+//         chat_history: (input: ConversationalRetrievalQAChainInput) =>
+//           formatChatHistory(input.chat_history),
+//       },
+//       CONDENSE_QUESTION_PROMPT,
+//       llm,
+//       new StringOutputParser(),
+//     ]);
+//     console.log(`standaloneQuestionChain is ${standaloneQuestionChain}`);
+//     const answerChain = RunnableSequence.from([
+//       {
+//         context: retriever.pipe(formatDocumentsAsString),
+//         question: new RunnablePassthrough(),
+//       },
+//       ANSWER_PROMPT,
+//       llm,
+//     ]);
+//     console.log(`answerChain is ${answerChain}`);
+//     const conversationalRetrievalQAChain =
+//       standaloneQuestionChain.pipe(answerChain);
+//     const result1 = await conversationalRetrievalQAChain.invoke({
+//       question: question,
+//       chat_history: [],
+//     });
+//     console.log(result1);
+//     res.status(200).send({ answer: result1 });
+//   } catch (error) {
+//     console.error("Error handling question:", error);
+//     res.status(500).send("Internal Server Error");
+//   }
+// });
 app.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { question } = req.body;
     if (!question) {
         return res.status(400).send("Question is required.");
     }
     try {
-        console.log(embeddings);
-        console.log("Start vectorize");
-        if (!embeddings)
-            throw new Error("Embeddings are not initialized.");
-        console.log(`vectordb is ${vector_store}`);
-    }
-    catch (error) {
-        throw new Error(`Failed to vectorize: ${error.message}`);
-    }
-    try {
-        const pc = yield (0, pinecone_2.getPineconeClient)();
-        const pineconeIndex = pc.index("yourlawyer");
-        const vector_store = yield pinecone_1.PineconeStore.fromExistingIndex(embeddings, {
-            pineconeIndex: pineconeIndex,
-            namespace: "yourLawyer",
-            textKey: "text",
-        });
         if (!vector_store)
             throw new Error("VectorDB is not initialized.");
-        console.log(`vector_store is ${vector_store}`);
         const results = yield vector_store.similaritySearch(question, 5);
-        console.log(`similaritySearch is ${results}`);
-        // const response = await openai.completions.create({
-        //   model: "gpt-3.5-turbo",
-        //   prompt: `Context: ${results.join("\n")}\nQuestion: ${question}\nAnswer:`,
-        //   max_tokens: 150,
-        // });
         const llm = new openai_3.ChatOpenAI({
             apiKey: process.env.OPENAI_API_KEY,
-            modelName: "gpt-4-1106-preview",
+            modelName: "gpt-3.5-turbo",
         });
-        console.log(`openai result  is ${llm}`);
-        // const memory = new ConversationTokenBufferMemory({
-        //   memoryKey: "chat_history",
-        //   returnMessages: true,
-        // });
         const retriever = vector_store.asRetriever();
-        // Create a conversational retrieval chain
-        const condenseQuestionTemplate = `Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question, in its original language.
-
-    Chat History:
-    {chat_history}
-    Follow Up Input: ${question}
-    Standalone question:`;
-        const CONDENSE_QUESTION_PROMPT = prompts_1.PromptTemplate.fromTemplate(condenseQuestionTemplate);
         const answerTemplate = `Answer the question based only on the following context:
 {context}
 
-Question: {question}
-`;
+Question: ${question}`;
         const ANSWER_PROMPT = prompts_1.PromptTemplate.fromTemplate(answerTemplate);
-        const formatChatHistory = (chatHistory) => {
-            const formattedDialogueTurns = chatHistory.map((dialogueTurn) => `Human: ${dialogueTurn[0]}\nAssistant: ${dialogueTurn[1]}`);
-            return formattedDialogueTurns.join("\n");
-        };
-        const standaloneQuestionChain = runnables_1.RunnableSequence.from([
-            {
-                question: (input) => input.question,
-                chat_history: (input) => formatChatHistory(input.chat_history),
-            },
-            CONDENSE_QUESTION_PROMPT,
-            llm,
-            new output_parsers_1.StringOutputParser(),
-        ]);
-        console.log(`standaloneQuestionChain is ${standaloneQuestionChain}`);
         const answerChain = runnables_1.RunnableSequence.from([
             {
                 context: retriever.pipe(document_1.formatDocumentsAsString),
@@ -125,13 +174,10 @@ Question: {question}
             ANSWER_PROMPT,
             llm,
         ]);
-        console.log(`answerChain is ${answerChain}`);
-        const conversationalRetrievalQAChain = standaloneQuestionChain.pipe(answerChain);
-        const result1 = yield conversationalRetrievalQAChain.invoke({
+        const result1 = yield answerChain.invoke({
             question: question,
             chat_history: [],
         });
-        console.log(result1);
         res.status(200).send({ answer: result1 });
     }
     catch (error) {
