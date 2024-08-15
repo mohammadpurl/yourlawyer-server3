@@ -25,9 +25,10 @@ const pinecone_2 = require("./src/lib/pinecone");
 const openai_3 = require("@langchain/openai");
 const db_1 = __importDefault(require("./startup/db"));
 const config_1 = __importDefault(require("./startup/config"));
-const retrieval_1 = require("langchain/chains/retrieval");
 const prompts_1 = require("@langchain/core/prompts");
-const combine_documents_1 = require("langchain/chains/combine_documents");
+const runnables_1 = require("@langchain/core/runnables");
+const output_parsers_1 = require("@langchain/core/output_parsers");
+const document_1 = require("langchain/util/document");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({ origin: "*" }));
@@ -89,16 +90,47 @@ app.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         // });
         const retriever = vector_store.asRetriever();
         // Create a conversational retrieval chain
-        const prompt = prompts_1.ChatPromptTemplate.fromTemplate(`Answer the user's question: {input} based on the following context {context}`);
-        const combineDocsChain = yield (0, combine_documents_1.createStuffDocumentsChain)({
+        const condenseQuestionTemplate = `Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question, in its original language.
+
+    Chat History:
+    {chat_history}
+    Follow Up Input: ${question}
+    Standalone question:`;
+        const CONDENSE_QUESTION_PROMPT = prompts_1.PromptTemplate.fromTemplate(condenseQuestionTemplate);
+        const answerTemplate = `Answer the question based only on the following context:
+{context}
+
+Question: {question}
+`;
+        const ANSWER_PROMPT = prompts_1.PromptTemplate.fromTemplate(answerTemplate);
+        const formatChatHistory = (chatHistory) => {
+            const formattedDialogueTurns = chatHistory.map((dialogueTurn) => `Human: ${dialogueTurn[0]}\nAssistant: ${dialogueTurn[1]}`);
+            return formattedDialogueTurns.join("\n");
+        };
+        const standaloneQuestionChain = runnables_1.RunnableSequence.from([
+            {
+                question: (input) => input.question,
+                chat_history: (input) => formatChatHistory(input.chat_history),
+            },
+            CONDENSE_QUESTION_PROMPT,
             llm,
-            prompt,
+            new output_parsers_1.StringOutputParser(),
+        ]);
+        const answerChain = runnables_1.RunnableSequence.from([
+            {
+                context: retriever.pipe(document_1.formatDocumentsAsString),
+                question: new runnables_1.RunnablePassthrough(),
+            },
+            ANSWER_PROMPT,
+            llm,
+        ]);
+        const conversationalRetrievalQAChain = standaloneQuestionChain.pipe(answerChain);
+        const result1 = yield conversationalRetrievalQAChain.invoke({
+            question: question,
+            chat_history: [],
         });
-        const retrievalChain = yield (0, retrieval_1.createRetrievalChain)({
-            combineDocsChain,
-            retriever,
-        });
-        res.status(200).send({ answer: retrievalChain });
+        console.log(result1);
+        res.status(200).send({ answer: result1 });
     }
     catch (error) {
         console.error("Error handling question:", error);
