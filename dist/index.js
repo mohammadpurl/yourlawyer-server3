@@ -27,7 +27,7 @@ const db_1 = __importDefault(require("./startup/db"));
 const config_1 = __importDefault(require("./startup/config"));
 const prompts_1 = require("@langchain/core/prompts");
 const runnables_1 = require("@langchain/core/runnables");
-const document_1 = require("langchain/util/document");
+const output_parsers_1 = require("@langchain/core/output_parsers");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({ origin: "*" }));
@@ -179,26 +179,67 @@ app.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         console.log(`openai result  is ${llm}`);
         const retriever = vector_store.asRetriever();
         console.log(retriever);
+        const condenseQuestionTemplate = `Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
+
+Chat History:
+{chat_history}
+Follow Up Input: {question}
+Standalone question:
+`;
+        const CONDENSE_QUESTION_PROMPT = prompts_1.PromptTemplate.fromTemplate(condenseQuestionTemplate);
         const answerTemplate = `Answer the question based only on the following context:
 {context}
 
-Question: ${question}`;
-        console.log(`answerTemplate is : ${answerTemplate}`);
+Question: {question}
+`;
         const ANSWER_PROMPT = prompts_1.PromptTemplate.fromTemplate(answerTemplate);
+        // Combine documents into a single string
+        const combineDocumentsFn = (allDocs) => {
+            const serializedDocs = allDocs.map((doc) => doc.pageContent);
+            return serializedDocs.join("\n\n");
+        };
+        const formatChatHistory = (chatHistory) => {
+            const formattedDialogueTurns = chatHistory.map((dialogueTurn) => `Human: ${dialogueTurn[0]}\nAssistant: ${dialogueTurn[1]}`);
+            return formattedDialogueTurns.join("\n");
+        };
+        const standaloneQuestionChain = runnables_1.RunnableSequence.from([
+            {
+                chat_history: (input) => formatChatHistory(input.chat_history),
+                question: (input) => input.question,
+            },
+            CONDENSE_QUESTION_PROMPT,
+            llm,
+            new output_parsers_1.StringOutputParser(),
+        ]);
         const answerChain = runnables_1.RunnableSequence.from([
             {
-                context: retriever.pipe(document_1.formatDocumentsAsString),
+                context: retriever.pipe(combineDocumentsFn),
                 question: new runnables_1.RunnablePassthrough(),
             },
             ANSWER_PROMPT,
             llm,
+            new output_parsers_1.StringOutputParser(),
         ]);
-        console.log(`answerChain is : ${answerChain}`);
-        const result1 = yield answerChain.invoke({
+        const conversationalRetrievalQAChain = standaloneQuestionChain.pipe(answerChain);
+        // const result1 = await conversationalRetrievalQAChain.invoke({
+        //   question: "Where is the golden key?",
+        //   chat_history: [],
+        // });
+        // console.log(result1);
+        /*
+      AIMessage { content: "The golden key is in the Mountains of Ilsodor. }
+    */
+        const result2 = yield conversationalRetrievalQAChain.invoke({
             question: question,
-            chat_history: [],
+            chat_history: [
+                [
+                    "Where is the golden key?",
+                    "The golden key is in the Mountains of Ilsodor.",
+                ],
+            ],
         });
-        res.status(200).send({ answer: result1 });
+        console.log(result2);
+        res.status(200).send({ answer: result2 });
     }
     catch (error) {
         console.error("Error handling question:", error);
