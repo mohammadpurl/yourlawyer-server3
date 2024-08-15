@@ -158,13 +158,24 @@ app.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         return res.status(400).send("Question is required.");
     }
     try {
+        yield initializePinecone();
+        const pc = yield (0, pinecone_2.getPineconeClient)();
+        const pineconeIndex = pc.index("yourlawyer");
+        const vector_store = yield pinecone_1.PineconeStore.fromExistingIndex(embeddings, {
+            pineconeIndex: pineconeIndex,
+            namespace: "yourLawyer",
+            textKey: "text",
+        });
         if (!vector_store)
             throw new Error("VectorDB is not initialized.");
+        console.log(`vector_store is ${vector_store}`);
         const results = yield vector_store.similaritySearch(question, 5);
+        console.log(`similaritySearch is ${results}`);
         const llm = new openai_3.ChatOpenAI({
             apiKey: process.env.OPENAI_API_KEY,
             modelName: "gpt-3.5-turbo",
         });
+        console.log(`openai result  is ${llm}`);
         const retriever = vector_store.asRetriever();
         const answerTemplate = `Answer the question based only on the following context:
 {context}
@@ -260,7 +271,6 @@ function initializeServer() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             yield loadAndVectorizeDocuments(pdfFiles);
-            yield initializePinecone();
             app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
         }
         catch (error) {

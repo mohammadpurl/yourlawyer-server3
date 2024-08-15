@@ -170,13 +170,25 @@ app.post("/", async (req: Request, res: Response) => {
   }
 
   try {
+    await initializePinecone();
+    const pc = await getPineconeClient();
+    const pineconeIndex = pc.index("yourlawyer");
+    const vector_store = await PineconeStore.fromExistingIndex(embeddings, {
+      pineconeIndex: pineconeIndex,
+      namespace: "yourLawyer",
+      textKey: "text",
+    });
     if (!vector_store) throw new Error("VectorDB is not initialized.");
+    console.log(`vector_store is ${vector_store}`);
+
     const results = await vector_store.similaritySearch(question, 5);
+    console.log(`similaritySearch is ${results}`);
 
     const llm = new ChatOpenAI({
       apiKey: process.env.OPENAI_API_KEY,
       modelName: "gpt-3.5-turbo",
     });
+    console.log(`openai result  is ${llm}`);
 
     const retriever = vector_store.asRetriever();
 
@@ -279,7 +291,7 @@ const PORT = process.env.PORT || 5000;
 async function initializeServer() {
   try {
     await loadAndVectorizeDocuments(pdfFiles);
-    await initializePinecone();
+
     app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
   } catch (error) {
     console.error("Failed to initialize server:", error);
