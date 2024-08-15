@@ -57,6 +57,7 @@ const openai = new OpenAI({
       namespace: "yourLawyer",
       textKey: "text",
     });
+    console.log(vector_store);
   } catch (error) {
     console.error("Error initializing vector store:", error);
   }
