@@ -153,13 +153,18 @@ function initializePinecone() {
 //     res.status(500).send("Internal Server Error");
 //   }
 // });
-app.post("/newask", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const data = yield (0, get_related_data_as_retrieval_1.getRelatedDataAsRetrieval)(req.body);
-    res.status(200).send({
-        data,
-    });
-}));
 app.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const data = yield (0, get_related_data_as_retrieval_1.getRelatedDataAsRetrieval)(req.body);
+    try {
+        const result = vectorizeDocuments(path_1.default.join(__dirname, "public/Data/requests.pdf"));
+        res.status(200).send({ answer: result });
+    }
+    catch (error) {
+        console.error("Error handling question:", error);
+        res.status(500).send("Internal Server Error");
+    }
+}));
+app.post("/old", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { question } = req.body;
     if (!question) {
         return res.status(400).send("Question is required.");

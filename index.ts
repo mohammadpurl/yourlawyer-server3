@@ -166,13 +166,19 @@ async function initializePinecone() {
 //     res.status(500).send("Internal Server Error");
 //   }
 // });
-app.post("/newask", async (req: Request, res: Response) => {
+app.post("/", async (req: Request, res: any) => {
   const data = await getRelatedDataAsRetrieval(req.body);
-  res.status(200).send({
-    data,
-  });
+  try {
+    const result = vectorizeDocuments(
+      path.join(__dirname, "public/Data/requests.pdf")
+    );
+    res.status(200).send({ answer: result });
+  } catch (error) {
+    console.error("Error handling question:", error);
+    res.status(500).send("Internal Server Error");
+  }
 });
-app.post("/", async (req: Request, res: Response) => {
+app.post("/old", async (req: Request, res: Response) => {
   const { question } = req.body;
   if (!question) {
     return res.status(400).send("Question is required.");
