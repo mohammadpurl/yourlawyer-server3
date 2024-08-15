@@ -49,7 +49,9 @@ const openai = new openai_1.default({
 (() => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const pc = yield (0, pinecone_2.getPineconeClient)();
-        embeddings = new openai_2.OpenAIEmbeddings();
+        embeddings = new openai_2.OpenAIEmbeddings({
+            openAIApiKey: process.env.OPENAI_API_KEY,
+        });
         const pineconeIndex = pc.index("yourlawyer");
         vector_store = yield pinecone_1.PineconeStore.fromExistingIndex(embeddings, {
             pineconeIndex: pineconeIndex,
