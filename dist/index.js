@@ -177,7 +177,7 @@ app.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             textKey: "text",
         });
         console.log(`vector_store is ${vector_store}`);
-        const results = yield vector_store.similaritySearch(question, 5);
+        const results = yield vector_store.similaritySearch(question, 152);
         console.log(`similaritySearch is ${results}`);
         const llm = new openai_3.ChatOpenAI({
             apiKey: process.env.OPENAI_API_KEY,
@@ -186,19 +186,9 @@ app.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         console.log(`openai result  is ${llm}`);
         const retriever = vector_store.asRetriever();
         console.log(retriever);
-        const condenseQuestionTemplate = `با توجه به مکالمه زیر و یک سؤال بعدی، سؤال بعدی را مجدداً به عنوان سؤال مستقل بیان کنید.
-
-تاریخچه چت:
-{chat_history}
-پیگیری ورودی: {question}
-سوال مستقل:
-`;
+        const condenseQuestionTemplate = ``;
         const CONDENSE_QUESTION_PROMPT = prompts_1.PromptTemplate.fromTemplate(condenseQuestionTemplate);
-        const answerTemplate = `Answer the question based only on the following context:
-{context}
-
-Question: {question}
-`;
+        const answerTemplate = ``;
         const ANSWER_PROMPT = prompts_1.PromptTemplate.fromTemplate(answerTemplate);
         // Combine documents into a single string
         const combineDocumentsFn = (allDocs) => {
@@ -228,43 +218,12 @@ Question: {question}
             new output_parsers_1.StringOutputParser(),
         ]);
         const conversationalRetrievalQAChain = standaloneQuestionChain.pipe(answerChain);
-        // const result1 = await conversationalRetrievalQAChain.invoke({
-        //   question: "Where is the golden key?",
-        //   chat_history: [],
-        // });
-        // console.log(result1);
-        /*
-      AIMessage { content: "The golden key is in the Mountains of Ilsodor. }
-    */
-        const response = yield openai.chat.completions.create({
-            model: "gpt-3.5-turbo",
-            temperature: 0,
-            stream: true,
-            messages: [
-                {
-                    role: "system",
-                    content: "Use the following pieces of context (or previous conversaton if needed) to answer the users question in markdown format.",
-                },
-                {
-                    role: "user",
-                    content: `Use the following pieces of context (or previous conversaton if needed) to answer the users question in markdown format. \nIf you don't know the answer, just say that you don't know, don't try to make up an answer.
-      
-\n----------------\n
-
-
-CONTEXT:
-${results.map((r) => r.pageContent).join("\n\n")}
-
-USER INPUT: ${question}`,
-                },
-            ],
-        });
         const result2 = yield conversationalRetrievalQAChain.invoke({
             question: question,
             chat_history: [[]],
         });
         console.log(result2);
-        res.status(200).send({ answer: result2, response });
+        res.status(200).send({ answer: result2 });
     }
     catch (error) {
         console.error("Error handling question:", error);

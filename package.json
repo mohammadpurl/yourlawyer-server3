@@ -1,18 +1,16 @@
 {
   "name": "yourlawyer-server3",
   "version": "1.0.0",
-  "main": "index.ts",  
-
+  "main": "index.ts",
   "scripts": {
-  "build": "tsc",
-  "dev": "ts-node index.ts",
-  "start": "node dist/index.js"
-},
-
+    "build": "tsc",
+    "dev": "ts-node index.ts",
+    "start": "node dist/index.js"
+  },
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "@langchain/community": "^0.2.25",
-    "@langchain/core": "^0.2.23",
+    "@langchain/core": "^0.2.24",
     "@langchain/openai": "^0.2.6",
     "@langchain/pinecone": "^0.0.8",
     "@langchain/textsplitters": "^0.0.3",
