@@ -165,13 +165,13 @@ async function initializePinecone() {
 //     res.status(500).send("Internal Server Error");
 //   }
 // });
-app.post("/", async (req: Request, res: Response) => {
+app.post("/new", async (req: Request, res: Response) => {
   const data = await getRelatedDataAsRetrieval(req.body);
   res.status(200).send({
     data,
   });
 });
-app.post("/newask", async (req: Request, res: Response) => {
+app.post("/", async (req: Request, res: Response) => {
   const { question } = req.body;
   if (!question) {
     return res.status(400).send("Question is required.");
@@ -255,7 +255,6 @@ Question: {question}
         context: retriever.pipe(combineDocumentsFn),
         question: new RunnablePassthrough(),
       },
-      ANSWER_PROMPT,
       llm,
       new StringOutputParser(),
     ]);

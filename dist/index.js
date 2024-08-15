@@ -153,13 +153,13 @@ function initializePinecone() {
 //     res.status(500).send("Internal Server Error");
 //   }
 // });
-app.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post("/new", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const data = yield (0, get_related_data_as_retrieval_1.getRelatedDataAsRetrieval)(req.body);
     res.status(200).send({
         data,
     });
 }));
-app.post("/newask", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { question } = req.body;
     if (!question) {
         return res.status(400).send("Question is required.");
@@ -223,7 +223,6 @@ Question: {question}
                 context: retriever.pipe(combineDocumentsFn),
                 question: new runnables_1.RunnablePassthrough(),
             },
-            ANSWER_PROMPT,
             llm,
             new output_parsers_1.StringOutputParser(),
         ]);
