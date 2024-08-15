@@ -178,11 +178,12 @@ app.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         });
         console.log(`openai result  is ${llm}`);
         const retriever = vector_store.asRetriever();
-        console.log(`retriever ${retriever}`);
+        console.log(retriever);
         const answerTemplate = `Answer the question based only on the following context:
 {context}
 
 Question: ${question}`;
+        console.log(`answerTemplate is : ${answerTemplate}`);
         const ANSWER_PROMPT = prompts_1.PromptTemplate.fromTemplate(answerTemplate);
         const answerChain = runnables_1.RunnableSequence.from([
             {
@@ -192,6 +193,7 @@ Question: ${question}`;
             ANSWER_PROMPT,
             llm,
         ]);
+        console.log(`answerChain is : ${answerChain}`);
         const result1 = yield answerChain.invoke({
             question: question,
             chat_history: [],

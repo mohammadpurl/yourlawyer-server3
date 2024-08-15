@@ -194,12 +194,13 @@ app.post("/", async (req: Request, res: Response) => {
 
     const retriever = vector_store.asRetriever();
 
-    console.log(`retriever ${retriever}`);
+    console.log(retriever);
 
     const answerTemplate = `Answer the question based only on the following context:
 {context}
 
 Question: ${question}`;
+    console.log(`answerTemplate is : ${answerTemplate}`);
 
     const ANSWER_PROMPT = PromptTemplate.fromTemplate(answerTemplate);
 
@@ -211,6 +212,7 @@ Question: ${question}`;
       ANSWER_PROMPT,
       llm,
     ]);
+    console.log(`answerChain is : ${answerChain}`);
 
     const result1 = await answerChain.invoke({
       question: question,
