@@ -166,7 +166,8 @@ async function initializePinecone() {
 //     res.status(500).send("Internal Server Error");
 //   }
 // });
-app.post("/", async (req: Request, res: any) => {
+
+app.post("/old", async (req: Request, res: any) => {
   const data = await getRelatedDataAsRetrieval(req.body);
   try {
     const result = vectorizeDocuments(
@@ -178,7 +179,7 @@ app.post("/", async (req: Request, res: any) => {
     res.status(500).send("Internal Server Error");
   }
 });
-app.post("/old", async (req: Request, res: Response) => {
+app.post("/", async (req: Request, res: Response) => {
   const { question } = req.body;
   if (!question) {
     return res.status(400).send("Question is required.");
@@ -211,13 +212,22 @@ app.post("/old", async (req: Request, res: Response) => {
 
     console.log(retriever);
 
-    const condenseQuestionTemplate = ``;
+    const condenseQuestionTemplate = `Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question, in its original language.
+
+Chat History:
+{chat_history}
+Follow Up Input: {question}
+Standalone question:`;
 
     const CONDENSE_QUESTION_PROMPT = PromptTemplate.fromTemplate(
       condenseQuestionTemplate
     );
 
-    const answerTemplate = ``;
+    const answerTemplate = `Answer the question based only on the following context:
+{context}
+
+Question: {question}
+`;
 
     const ANSWER_PROMPT = PromptTemplate.fromTemplate(answerTemplate);
     // Combine documents into a single string
@@ -327,10 +337,10 @@ async function loadAndVectorizeDocuments(pdfPaths: string[]): Promise<void> {
 
     const pc = await getPineconeClient();
     const pineconeIndex = pc.index("yourlawyer");
-    vector_store = await PineconeStore.fromDocuments(allDocs, embeddings, {
-      pineconeIndex: pineconeIndex,
-      namespace: "yourLawyer",
-      textKey: "text",
+
+    await PineconeStore.fromDocuments(allDocs, embeddings, {
+      pineconeIndex,
+      namespace: "prallDocsTemplate",
     });
     console.log(vector_store);
   } catch (error) {
@@ -341,6 +351,13 @@ async function loadAndVectorizeDocuments(pdfPaths: string[]): Promise<void> {
 const pdfFiles = [path.join(__dirname, "public/Data/requests.pdf")];
 
 const PORT = process.env.PORT || 5000;
+async function initializeVectorDB() {
+  const embeddings = new OpenAIEmbeddings({
+    openAIApiKey: process.env.OPENAI_API_KEY,
+  });
+  const pc = await getPineconeClient();
+  const pineconeIndex = pc.index("yourlawyer");
+}
 async function initializeServer() {
   try {
     await loadAndVectorizeDocuments(pdfFiles);
